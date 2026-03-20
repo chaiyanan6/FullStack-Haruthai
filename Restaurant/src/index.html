@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ha-ru-thai - Restaurant Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Cormorant Garamond', 'serif'],
+            sans: ['DM Sans', 'sans-serif'],
+          },
+          colors: {
+            bg: '#0d0d0d',
+            surface: '#161616',
+            card: '#1c1c1c',
+            border: '#2d2d2d',
+            muted: '#737373',
+            fg: '#f5f5f5',
+            accent: '#d4a853',
+            'accent-dark': '#a67c3d',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { 
+      font-family: 'DM Sans', sans-serif;
+      background-color: #0d0d0d;
+      color: #f5f5f5;
+      overflow-x: hidden;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #161616; }
+    ::-webkit-scrollbar-thumb { background: #2d2d2d; border-radius: 3px; }
+    
+    /* Hero Slideshow */
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1.2s ease-in-out;
+    }
+    .hero-slide.active {
+      opacity: 1;
+    }
+    
+    .hero-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.4) saturate(1.1);
+    }
+    
+    /* Text animation */
+    @keyframes fadeUp {
+      from { 
+        opacity: 0; 
+        transform: translateY(40px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      }
+    }
+    
+    @keyframes scaleIn {
+      from { 
+        opacity: 0; 
+        transform: scale(0.9); 
+      }
+      to { 
+        opacity: 1; 
+        transform: scale(1); 
+      }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    
+    .animate-fade-up {
+      animation: fadeUp 1s ease-out forwards;
+    }
+    
+    .animate-scale-in {
+      animation: scaleIn 0.8s ease-out forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.2s; opacity: 0; }
+    .delay-2 { animation-delay: 0.4s; opacity: 0; }
+    .delay-3 { animation-delay: 0.6s; opacity: 0; }
+    
+    /* Sidebar */
+    .sidebar-link {
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .sidebar-link::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 0;
+      background: #d4a853;
+      border-radius: 0 2px 2px 0;
+      transition: height 0.3s ease;
+    }
+    .sidebar-link:hover::before,
+    .sidebar-link.active::before {
+      height: 60%;
+    }
+    .sidebar-link:hover,
+    .sidebar-link.active {
+      background: linear-gradient(90deg, rgba(212, 168, 83, 0.08) 0%, transparent 100%);
+      color: #d4a853;
+    }
+    
+    /* Slide indicators */
+    .slide-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.4s ease;
+    }
+    .slide-dot.active {
+      background: #d4a853;
+      width: 24px;
+      border-radius: 4px;
+    }
+    
+    /* Decorative line */
+    .deco-line {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #d4a853, transparent);
+    }
+    
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-surface/95 backdrop-blur-xl border-r border-border z-50 transform transition-transform duration-300 lg:translate-x-0 -translate-x-full">
+    
+    <!-- Logo -->
+    <div class="p-8 border-b border-border">
+      <h1 class="font-display text-3xl font-semibold text-accent tracking-wide">Ha-ru-thai</h1>
+      <p class="text-xs text-muted mt-1 tracking-widest uppercase">การจัดการร้านอาหาร</p>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="p-4 space-y-1" role="navigation">
+      <a href="#" class="sidebar-link active flex items-center gap-4 px-5 py-4 rounded-r-lg text-left">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span class="font-medium">ร้านอาหาร</span>
+      </a>
+      
+      <a href="#" class="sidebar-link flex items-center gap-4 px-5 py-4 rounded-r-lg text-left">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+        <span class="font-medium">เมนู</span>
+      </a>
+      
+      <a href="#" class="sidebar-link flex items-center gap-4 px-5 py-4 rounded-r-lg text-left">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <span class="font-medium">ลูกค้า</span>
+      </a>
+      
+      <a href="#" class="sidebar-link flex items-center gap-4 px-5 py-4 rounded-r-lg text-left">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="font-medium">การจองโต๊ะ</span>
+      </a>
+      
+      <a href="#" class="sidebar-link flex items-center gap-4 px-5 py-4 rounded-r-lg text-left">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <span class="font-medium">คำสั่งซื้อ</span>
+      </a>
+      
+      <a href="#" class="sidebar-link flex items-center gap-4 px-5 py-4 rounded-r-lg text-left">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+        </svg>
+        <span class="font-medium">การชำระเงิน</span>
+      </a>
+      
+      <a href="#" class="sidebar-link flex items-center gap-4 px-5 py-4 rounded-r-lg text-left">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <span class="font-medium">พนักงาน</span>
+      </a>
+    </nav>
+    
+    <!-- Footer -->
+    <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-border">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent-dark flex items-center justify-center">
+          <span class="font-semibold text-bg">A</span>
+        </div>
+        <div>
+          <p class="font-medium text-sm">Admin User</p>
+          <p class="text-xs text-muted">admin@thairestaurants.com</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+  
+  <!-- Mobile Menu Toggle -->
+  <button id="menuToggle" class="fixed top-4 left-4 z-[60] lg:hidden p-3 bg-surface/90 backdrop-blur border border-border rounded-xl" aria-label="Toggle menu">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  </button>
+  
+  <!-- Main Content -->
+  <main class="lg:ml-72 min-h-screen">
+    
+    <!-- Hero Section with Slideshow -->
+    <section class="relative h-screen w-full overflow-hidden">
+      
+      <!-- Slideshow Container -->
+      <div id="slideshow" class="absolute inset-0">
+        <!-- Slides will be rendered by JS -->
+      </div>
+      
+      <!-- Overlay gradient -->
+      <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/30 to-transparent pointer-events-none"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-bg/60 via-transparent to-bg/60 pointer-events-none"></div>
+      
+      <!-- Center Content -->
+      <div class="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
+        <div class="deco-line mb-8 animate-scale-in"></div>
+        
+        <h2 class="font-display text-lg tracking-[0.3em] text-accent/80 uppercase mb-4 animate-fade-up">
+          ยินดีต้อนรับสู่
+        </h2>
+        
+        <h1 class="font-display text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-semibold tracking-wide animate-fade-up delay-1">
+          Ha-ru-thai
+        </h1>
+        
+        <p class="mt-6 text-lg sm:text-xl text-muted max-w-xl animate-fade-up delay-2">
+          ประสบการณ์การรับประทานอาหารชั้นเลิศกับอาหารไทยต้นตำรับแท้ๆ
+        </p>
+        
+        <div class="mt-10 flex flex-col sm:flex-row gap-4 animate-fade-up delay-3">
+          <a href="#" class="px-8 py-4 bg-accent text-bg font-semibold rounded-lg hover:bg-accent-dark transition-colors">
+            จองโต๊ะอาหาร
+          </a>
+          <a href="#" class="px-8 py-4 border border-fg/30 text-fg font-medium rounded-lg hover:bg-fg/5 transition-colors">
+            ดูเมนู
+          </a>
+        </div>
+        
+        <div class="deco-line mt-12 animate-scale-in delay-3"></div>
+      </div>
+      
+      <!-- Slide Indicators -->
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
+        <button class="slide-dot active" data-slide="0" aria-label="Slide 1"></button>
+        <button class="slide-dot" data-slide="1" aria-label="Slide 2"></button>
+        <button class="slide-dot" data-slide="2" aria-label="Slide 3"></button>
+        <button class="slide-dot" data-slide="3" aria-label="Slide 4"></button>
+        <button class="slide-dot" data-slide="4" aria-label="Slide 5"></button>
+      </div>
+      
+      <!-- Scroll indicator -->
+      <div class="absolute bottom-8 right-8 z-20 hidden lg:flex flex-col items-center gap-2 text-muted">
+        <span class="text-xs tracking-widest uppercase rotate-90 origin-center translate-y-8">Scroll</span>
+        <svg class="w-5 h-5 animate-bounce mt-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+        </svg>
+      </div>
+    </section>
+    
+  </main>
+
+  <script>
+    // ============================================
+    // DATA - Food Images
+    // ============================================
+    const slides = [
+      {
+        image: 'https://images.unsplash.com/photo-1562565652-a0d8f0c59eb4?w=1920&q=80',
+        alt: 'Thai curry dish'
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=1920&q=80',
+        alt: 'Pad Thai noodles'
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=1920&q=80',
+        alt: 'Fresh salad'
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=1920&q=80',
+        alt: 'Thai soup'
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1920&q=80',
+        alt: 'Gourmet dish'
+      }
+    ];
+    
+    // ============================================
+    // DOM References
+    // ============================================
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.getElementById('menuToggle');
+    const slideshow = document.getElementById('slideshow');
+    const slideDots = document.querySelectorAll('.slide-dot');
+    
+    let currentSlide = 0;
+    let slideInterval = null;
+    
+    // ============================================
+    // Render Slides
+    // ============================================
+    function renderSlides() {
+      slideshow.innerHTML = slides.map((slide, index) => `
+        <div class="hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
+          <img 
+            src="${slide.image}" 
+            alt="${slide.alt}" 
+            class="hero-image"
+            loading="${index === 0 ? 'eager' : 'lazy'}"
+          >
+        </div>
+      `).join('');
+    }
+    
+    // ============================================
+    // Slideshow Controls
+    // ============================================
+    function goToSlide(index) {
+      const allSlides = document.querySelectorAll('.hero-slide');
+      
+      allSlides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+      
+      slideDots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+      
+      currentSlide = index;
+    }
+    
+    function nextSlide() {
+      const next = (currentSlide + 1) % slides.length;
+      goToSlide(next);
+    }
+    
+    function startSlideshow() {
+      if (slideInterval) clearInterval(slideInterval);
+      slideInterval = setInterval(nextSlide, 5000);
+    }
+    
+    // Click on dots
+    slideDots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const index = parseInt(dot.dataset.slide);
+        goToSlide(index);
+        startSlideshow(); // Reset timer
+      });
+    });
+    
+    // ============================================
+    // Mobile Menu
+    // ============================================
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('-translate-x-full');
+    });
+    
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth < 1024 && 
+          !sidebar.contains(e.target) && 
+          !menuToggle.contains(e.target) &&
+          !sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.add('-translate-x-full');
+      }
+    });
+    
+    // ============================================
+    // Initialize
+    // ============================================
+    function init() {
+      renderSlides();
+      startSlideshow();
+    }
+    
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
